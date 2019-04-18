@@ -14,11 +14,11 @@
  *
  * @return {VNode}
  */
-export function h (tagName, attributes = {}, children = []) {
+export function h(tagName, attributes = {}, children = []) {
   return {
     tagName,
     attributes,
-    children,
+    children
   };
 }
 
@@ -27,7 +27,7 @@ export function h (tagName, attributes = {}, children = []) {
  * @param {ChildNode} element
  * @param {Object} attributes
  */
-function diffAttrs (element, attributes) {
+function diffAttrs(element, attributes) {
   const newAttrs = Object.keys(attributes);
   const attrs = element.attributes;
   for (let i = attrs.length - 1; i >= 0; i--) {
@@ -36,7 +36,7 @@ function diffAttrs (element, attributes) {
     // if we already have the attribute, let's reuse it
     if (attributes[name] !== undefined) {
       newAttrs.splice(newAttrs.indexOf(name), 1);
-      if (""+attributes[name] !== value) {
+      if ("" + attributes[name] !== value) {
         attrs[i].value = attributes[name];
       }
     } else {
@@ -46,7 +46,7 @@ function diffAttrs (element, attributes) {
   }
   newAttrs.map(a => {
     // event handlers
-    if (a[0] === 'o' && a[1] === 'n') {
+    if (a[0] === "o" && a[1] === "n") {
       const name = a.toLowerCase().substr(2);
       if (!element._listen || !element._listen[name])
         element.addEventListener(name, eventProxy, false);
@@ -72,30 +72,39 @@ const EMPTY_ARR = [];
  * @param {boolean?} isSvg
  * @return {SVGAElement}
  */
-export function diff (parent, nodes, isSvg = false) {
-  const children = EMPTY_ARR.slice.call(parent.childNodes).reverse();
+export function diff(parent, nodes, isSvg = false) {
+  const children = parent.childNodes;
 
-  let n, i = 0, len = nodes.length;
+  let n,
+    i = 0,
+    len = nodes.length,
+    childI = 0,
+    isNew = false,
+    el;
   for (; i < len; i++) {
-    let n = nodes[i];
+    n = nodes[i];
     // skip null nodes
     if (!n) continue;
     // convert to string if it's not a normal node
-    n = n.tagName ? n : typeof n === 'string' ? n : ""+n;
+    n = n.tagName ? n : typeof n === "string" ? n : "" + n;
     // svgs need namespace elements
-    isSvg = n.tagName === 'svg' || isSvg;
+    isSvg = n.tagName === "svg" || isSvg;
     // try to find the right element, delete any that are not in the node tree
-    let el = children.pop();
-    while (el && (el.tagName && el.tagName.toLowerCase()) !== n.tagName && children.length >= 0) {
-      el.remove();
-      el = children.pop();
+    el = children[childI++];
+    while (el != null && (el.tagName || "#text").toLowerCase() !== n.tagName) {
+      parent.removeChild(el);
+      el = children[childI++];
     }
     // create and append an element if we didn't find one
-    if (!el) {
-      el = typeof n === 'string' ? document.createTextNode(n) : isSvg ? document.createElementNS('http://www.w3.org/2000/svg', n.tagName) : document.createElement(n.tagName);
-      parent.appendChild(el);
-    }
-    if (typeof n === 'string') {
+    isNew = !el;
+    el =
+      el ||
+      (typeof n === "string"
+        ? document.createTextNode(n)
+        : isSvg
+        ? document.createElementNS("http://www.w3.org/2000/svg", n.tagName)
+        : document.createElement(n.tagName));
+    if (typeof n === "string") {
       // text node
       el.data !== n && (el.data = n);
     } else {
@@ -103,7 +112,10 @@ export function diff (parent, nodes, isSvg = false) {
       diffAttrs(el, n.attributes);
       diff(el, n.children, isSvg);
     }
+    if (isNew) parent.appendChild(el);
   }
 
-  children.map(c => parent.removeChild(c));
+  for (; childI < children.length; childI++) {
+    parent.removeChild(children[childI]);
+  }
 }

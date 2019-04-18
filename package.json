@@ -8,8 +8,7 @@
     "build": "parcel build ./src/index.html"
   },
   "staticFiles": {
-    "staticPath": "public",
-    "watcherGlob": "**/*.json"
+    "staticPath": "public"
   },
   "devDependencies": {
     "parcel": "^1.12.3",

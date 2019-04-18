@@ -3,7 +3,8 @@
   padding: 0;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   min-height: 100%;
 }
@@ -154,7 +155,8 @@ h1 {
   cursor: move;
 }
 
-.handle.left,.handle.right {
+.handle.left,
+.handle.right {
   cursor: col-resize;
 }
 
